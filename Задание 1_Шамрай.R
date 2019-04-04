@@ -13,23 +13,29 @@ Ej = 25 #   стандартная влажность культуры
 
 #station_data = ghcnd_stations() #Может занять несколько минут лучше выполнить один раз в месте с хорошим интернетом и сохранить результат
 #write.csv(station_data, file = "station_data.csv")
+setwd("C:/Users/Борис/Desktop/Учеба/R/MathMod Shamrai/MathMod")
 station_data = read.csv("station_data.csv") [,-1]
 
-#После получения списка всех станций, получите список станций ближайших к столице вашего региона,создав таблицу с именем региона и координатами его столицы
+#Создадим таблицу, содержащую координаты Волгограда
 Volgograd = data.frame(id = "Volgograd", latitude = 48.699167,  longitude = 44.473333)
+#Получим список всех станций вблизи Волгограда
 Volgograd_around = meteo_nearby_stations(lat_lon_df = Volgograd, station_data = station_data,
-                                    limit = 3, var = c("PRCP", "TAVG"),
+                                    limit = 6, var = c("TAVG"),
                                     year_min = 2009, year_max = 2009)
-#Volgograd_around это список единственным элементом которого является таблица, содержащая идентификаторы метеостанций отсортированных по их 
-# удалленности от Volgograda, очевидно что первым элементом таблицы будет идентификатор метеостанции Volgograda, его то мы и попытаемся получить
-Volgograd_id = Volgograd_around[["Volgograd"]][["id"]][1]
-#данные за 2009 год есть только на одной из трех метеостанций вблизи г. Волгоград, цикл не требуется
+#Volgograd_around это список единственным элементом которого является таблица, содержащая идентификаторы метеостанций отсортированных по их удалленности от Volgograda
 
-#Для получения всех данных с метеостанции, зная ее идентификатор, используйте след. команду
-all_Volgograd_data = meteo_tidy_ghcnd(stationid = Volgograd_id, date_min="2009-04-1",date_max="2009-8-31")
-
-#оставляем интересующие нас столбики
-all_Volgograd_data = select(all_Volgograd_data, id, date, tavg)
+#Получим данные с 1,4 и 6 метеостанций
+#Создадим пустую таблицу куда запишем данные с метеостанций
+all_Volgograd_data = data.frame()
+#Для получения всех данных с метеостанции, зная ее идентификатор, используем цикл
+for(i in c(1,4,6)){
+  #Получим данные со стании и запишем во временную переменную
+  temp = meteo_tidy_ghcnd(stationid = Volgograd_around[["Volgograd"]][["id"]][i], date_min="2009-04-1", date_max="2009-08-31")
+  #Оставим нужные столбцы
+  temp = select(temp, id, date, tavg)
+  #Присоединим полученные данные в результирующую таблицу с данными
+  all_Volgograd_data = rbind(all_Volgograd_data, temp)
+}
 
 #преобразуем дату в месяц и день и добавим столбики
 all_Volgograd_data = mutate(all_Volgograd_data, month = month(date), day = day(date))
@@ -46,8 +52,8 @@ all_Volgograd_data_without0 = all_Volgograd_data_without0 %>% group_by(month)
 #Вычислим di для каждого месяца
 di = summarize(all_Volgograd_data, di = length(tavg[tavg>70])/length(tavg))[,-1]
 
-#Вычислим сумму температур больше 5 градусов в каждом месяце
-St = summarize(all_Volgograd_data_without0, St = sum(tavg[tavg>50])/10)[,-1]
+#Вычислим сумму температур больше 5 градусов в каждом месяце. Делим сумму на 3, т.к. у нас данные с 3х метеостанций
+St = summarize(all_Volgograd_data_without0, St = sum(tavg[tavg>50])/10/3)[,-1]
 
 #Найдем урожаность по формуле:
 Fi = ai + bi * 1.0 * St

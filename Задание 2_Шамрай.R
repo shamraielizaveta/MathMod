@@ -7,8 +7,9 @@ library("ggplot2")    #Графики функцией qplot()
 #Считываем файл онлайн
 #Или считываем файл офлайн. 
 #При этом пропускаем первую строку, заменяем все не числовые значения на NA, и игнорируем строчки с символом "["
-eddypro = read_csv("https://www.dropbox.com/s/erhs9hoj4vhrz0b/eddypro.csv?dl=1", skip = 1, na =c("","NA","-9999","-9999.0"), comment=c("["))
-#eddypro = read_csv("eddypro.csv", skip = 1, na =c("","NA","-9999","-9999.0"), comment=c("["))
+#eddypro = read_csv("https://www.dropbox.com/s/erhs9hoj4vhrz0b/eddypro.csv?dl=1", skip = 1, na =c("","NA","-9999","-9999.0"), comment=c("["))
+setwd("C:/Users/Борис/Desktop/Учеба/R/MathMod Shamrai/MathMod")
+eddypro = read_csv("eddypro.csv", skip = 1, na=c("","NA","-9999","-9999.0"), comment=c("["))
 
 #
 # Блок подготовки данных
@@ -71,10 +72,10 @@ anova(mod1)
 #Выведем графики
 plot(mod1) 
 
-#Создадим Модель 2, добавив в нее значимые переменные из результатов функции anova() (со значимость до 0.1, соответсвенно ***, ** и * пометки)
+#Создадим Модель 2, добавив в нее значимые переменные из результатов функции anova() (со значимость до 0.01, соответсвенно ***, ** и * пометки)
 mod2 = lm(co2_flux~ DOY + Tau + qc_Tau + rand_err_Tau + H + qc_H + rand_err_H + LE + qc_LE + qc_co2_flux + rand_err_co2_flux + h2o_flux
           + rand_err_h2o_flux + H_strg + co2_v_minus_adv + h2o_v_minus_adv + co2_molar_density + co2_mole_fraction + co2_mixing_ratio
-          + h2o_molar_density + h2o_mole_fraction + h2o_mixing_ratio + h2o_time_lag + sonic_temperature + air_temperature + air_pressure
+          + h2o_molar_density + h2o_mole_fraction + h2o_mixing_ratio + h2o_time_lag + air_temperature + air_pressure
           + air_density + air_heat_capacity + air_molar_volume + water_vapor_density + e + es + RH + Tdew + u_unrot + v_unrot + w_unrot
           + v_rot + w_rot + wind_dir + yaw + pitch + TKE + L + L_z_minus_dL__div_L + bowen_ratio + T_star_ + x_peak + x_offset + x_10_perc_
           + x_30_perc_ + x_50_perc_ + x_70_perc_ + un_Tau + H_scf + un_LE + un_co2_flux + un_h2o_flux + co2_spikes + co2_1
@@ -89,12 +90,9 @@ anova(mod2, mod1)
 plot(mod2) 
 
 #Создадим Модель 3, повторив отбрасывание
-mod3 = lm(co2_flux~ DOY + Tau + qc_Tau + rand_err_Tau + H + qc_H + rand_err_H + LE + qc_LE + qc_co2_flux + rand_err_co2_flux + h2o_flux
-          + rand_err_h2o_flux + H_strg + co2_v_minus_adv + h2o_v_minus_adv + co2_molar_density + co2_mole_fraction + co2_mixing_ratio
-          + h2o_molar_density + h2o_mole_fraction + h2o_mixing_ratio + h2o_time_lag + sonic_temperature + air_pressure
-          + air_density + air_heat_capacity + air_molar_volume + water_vapor_density + e + es + RH + u_unrot + v_unrot + w_unrot
-          + v_rot + yaw + pitch + TKE + L + L_z_minus_dL__div_L + bowen_ratio + T_star_ + x_peak + x_offset + x_10_perc_
-          + x_30_perc_ + x_50_perc_ + x_70_perc_ + un_Tau + H_scf + un_LE + un_co2_flux + un_h2o_flux
+mod3 = lm(co2_flux~ DOY + Tau + qc_Tau + qc_H + rand_err_H + qc_LE + rand_err_co2_flux + h2o_flux
+          + H_strg + co2_v_minus_adv + co2_molar_density + h2o_molar_density + h2o_time_lag + air_pressure
+          + u_unrot + v_unrot + w_unrot + v_rot + yaw + bowen_ratio + T_star_ + x_peak + un_co2_flux
           , data = teaching_tbl)
 #Получим информацию о моделе и коэффициенты
 summary(mod3)
@@ -104,6 +102,14 @@ anova(mod3)
 anova(mod3, mod2)
 #Выведем графики
 plot(mod3) 
+
+#Проведем корреляционный анализ переменных
+#Выберем из таблицы только участвующие у линейной моделе переменные
+cor_teaching_tbl = select(teaching_tbl, co2_flux, DOY, Tau, qc_Tau, qc_H, rand_err_H, qc_LE, rand_err_co2_flux, h2o_flux,
+                          H_strg, co2_v_minus_adv, co2_molar_density, h2o_molar_density, h2o_time_lag, air_pressure,
+                          u_unrot, v_unrot, w_unrot, v_rot, yaw, bowen_ratio, T_star_, x_peak, un_co2_flux)
+#Получаем таблицу коэффициентов корреляций. И подправляем модель 3, убирая из модели одну из двух коррелирующих между собой переменных (начиная от коэффициента >= 0.7)
+cor_td = cor(cor_teaching_tbl) %>% as.data.frame
 
 #
 # Графики по полученной моделе
