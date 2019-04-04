@@ -125,6 +125,6 @@ qplot(co2_flux , co2_flux, data = testing_tbl) + geom_line(aes(y = predict(mod3,
 #Так как у нас модель зависит от множества переменных, мы можем вывести много графиков зависимостей co2_flux от учитываемых в моделе параметров
 #В идеале предсказанная линия должна пройти через все точки, или как можно ближе к ним на ТЕСТИРУЮЩЕЙ выборке
 #Примеры
-qplot(H, co2_flux, data = testing_tbl) + geom_line(aes(y = predict(mod3, testing_tbl)))
+qplot(DOY, co2_flux, data = testing_tbl) + geom_line(aes(y = predict(mod3, testing_tbl)))
 qplot(Tau, co2_flux, data = testing_tbl) + geom_line(aes(y = predict(mod3, testing_tbl)))
 qplot(h2o_flux, co2_flux, data = testing_tbl) + geom_line(aes(y = predict(mod3, testing_tbl)))
